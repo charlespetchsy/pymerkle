@@ -367,7 +367,7 @@ class MerkleTree(HashMachine, Encryptor, Prover):
         Complements optimally from the right the provided sequence of subroots,
         so that a full consistency-path be subsequently generated.
 
-        :param subroots: roots of a complete leftomost sequence of
+        :param subroots: roots of a complete leftmost sequence of
                 full binary subtrees
         :type subroots: list of nodes
         :rtype: list of (+1/-1, bytes)
@@ -524,7 +524,7 @@ class MerkleTree(HashMachine, Encryptor, Prover):
     def export(self, file_path):
         """
         Creates a *.json* file located at the provided path and exports into
-        it the rquired minimum, so that the Merkle-tree can be retrieved in
+        it the required minimum, so that the Merkle-tree can be retrieved in
         its current state from that file
 
         .. note:: If the provided path does not end with *.json*, then this
@@ -572,6 +572,38 @@ class MerkleTree(HashMachine, Encryptor, Prover):
         tqdm.write('\nFile has been loaded')
         update = tree.update
         for hash in tqdm(loaded_object['hashes'], desc='Retrieving tree...'):
+            update(digest=hash)
+        tqdm.write('Tree has been retrieved')
+        return tree
+
+
+    @classmethod
+    def loadFromJSON(cls, json_object):
+        """
+        Loads a Merkle-tree from the provided JSON object, the latter being the result
+        of an string export (cf. the *toJSONString()* method)
+
+        :param json_object: JSON object to load from
+        :type json_object: dict
+        :returns: The tree loaded from the provided JSON object
+        :rtype: MerkleTree
+
+        :raises WrongJSONFormat: if the JSON object loaded is
+                    not a Merkle-tree export via toJSONString()
+        """
+        try:
+            header = json_object['header']
+            tree = cls(
+                hash_type=header['hash_type'],
+                encoding=header['encoding'],
+                raw_bytes=header['raw_bytes'],
+                security=header['security'])
+        except KeyError:
+            raise WrongJSONFormat
+
+        tqdm.write('\nJSON object has been loaded')
+        update = tree.update
+        for hash in tqdm(json_object['hashes'], desc='Retrieving tree...'):
             update(digest=hash)
         tqdm.write('Tree has been retrieved')
         return tree
@@ -683,10 +715,10 @@ class MerkleTree(HashMachine, Encryptor, Prover):
         Overrides the default implementation
 
         Sole purpose of this function is to display info about
-        the Merkle-treee by just invoking it at console
+        the Merkle-tree by just invoking it at console
 
         .. warning:: Contrary to convention, the output of this implementation
-            is not insertible to the eval() builtin Python function.
+            is not insertable to the eval() builtin Python function.
         """
 
         return '\n    uuid      : {uuid}\
